@@ -2,12 +2,9 @@
     프로그래머스 Lv.3
     보석 쇼핑
 
-
-
-    효율성 테스트에서 0점을 받는다...
-    이진탐색까진 맞는거 같은데..
-    슬라이딩 윈도우쪽에서 시간이 오래걸리는 듯하다..
-    어떻게 해결할 수 있을까..
+    이진탐색 버리고,
+    슬라이딩 윈도우와 set과 map을 함께 이용하여
+    모든 보석이 선택되었는지를 검사하여 시간을 단축시켰다
 */
 
 #include <string>
@@ -19,10 +16,19 @@
 
 using namespace std;
 
+bool IncludeAll(const map<string, int> selected) {
+    for (auto it = selected.begin(); it != selected.end(); it++) {
+        if (it->second <= 0) return false;
+    }
+
+    return true;
+}
+
+
+
 vector<int> solution(vector<string> gems) {
     vector<int> answer;
-    answer.push_back(0);
-    answer.push_back(0);
+
 
     int size = gems.size();
 
@@ -33,65 +39,35 @@ vector<int> solution(vector<string> gems) {
     int kinds = kind.size();
 
     int max = gems.size();
-   
-    //start부터, end까지 집었을 때, 선택된 각 보석의 수를 기록
-    map<string, int> selected;
-    int low = kinds, high = size;
+    answer.push_back(0);
+    answer.push_back(max);
 
-    while(low <= high){
-        selected.clear();
+    int start, end;
+    start = -1; end = -1;
 
-        int mid = (low + high) / 2;
-        int start = 0, end = mid;
+    map<string, int> selectedWithCount;
+    set<string> selected;
+    for (auto it = kind.begin(); it != kind.end(); it++) {
+        selectedWithCount.insert({ *it, 0 });
+    }
 
-        bool includeAll = false;
 
-        for (int i = start; i < end; i++) {
-            if (selected.find(gems[i]) == selected.end()) {
-                //한 번도 선택된 적 없는 경우
-                selected.insert({ gems[i], 1 });
-            }
-            else {
-                //중복 선택된 경우
-                selected[gems[i]]++;
-            }
+    while (end < max - 1) {
+        while (selected.size() != kinds && end < max - 1) {
+            selectedWithCount[gems[++end]]++;
+            selected.insert(gems[end]);
         }
 
-        if (selected.size() == kinds) {
-            includeAll = true;
-        }
-        else {
-            while (end < max) {
-                selected[gems[start]]--;
-
-                if (selected.find(gems[end]) == selected.end()) {
-                    selected.insert({ gems[end], 1 });
-                }
-                else {
-                    selected[gems[end]]++;
-                }
-
-                if (selected[gems[start]] == 0)
-                    selected.erase(gems[start]);
-
-                start++;
-                end++;
-
-                if (selected.size() == kinds) {
-                    includeAll = true;
-                    break;
-                }
+        while (selected.size() == kinds && start < end) {
+            selectedWithCount[gems[++start]]--;
+            if (selectedWithCount[gems[start]] == 0) {
+                selected.erase(gems[start]);
             }
         }
-        
 
-        if (includeAll) {
-            high = mid - 1;
+        if (answer[1] - answer[0] > end - start) {
+            answer[1] = end + 1;
             answer[0] = start + 1;
-            answer[1] = end;
-        }
-        else {
-            low = mid + 1;
         }
     }
 
@@ -102,8 +78,8 @@ vector<int> solution(vector<string> gems) {
 
 int main() {
     //vector<string> gems = { "DIA", "RUBY", "RUBY", "DIA", "DIA", "EMERALD", "SAPPHIRE", "DIA" };
-    vector<string> gems = { "ZZZ", "YYY", "NNNN", "YYY", "BBB" };
-    //vector<string> gems = { "AA", "AB", "AC", "AA", "AC" };
+    //vector<string> gems = { "ZZZ", "YYY", "NNNN", "YYY", "BBB" };
+    vector<string> gems = { "AA", "AB", "AC", "AA", "AC" };
     //vector<string> gems = { "XYZ", "XYZ", "XYZ" };
     vector<int> result = solution(gems);
     cout << result[0] << ", " << result[1];
